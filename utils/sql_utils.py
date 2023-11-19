@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 from sqlalchemy import text
+import re
 def get_engine_and_session():
     load_dotenv()
     
@@ -35,14 +36,49 @@ def search_logs_in_postgres(session, query, log_level, start_timestamp, end_time
     # Replace this query with your actual search query
     # This is just a placeholder query
     print(query, log_level, start_timestamp, end_timestamp)
+    
     log_level_filter = f"AND level = '{log_level.lower()}'" if log_level != 'All' else ''
     date_filter = f"AND timestamp BETWEEN '{start_timestamp}' AND '{end_timestamp}'"
 
     # Calculate the offset based on the page size and number
     offset = (page_no - 1) * page_size
 
-    sql_query = f"SELECT * FROM log_data_table WHERE 1=1 {log_level_filter} {date_filter} LIMIT {page_size} OFFSET {offset}"
+    # Substring matching with the message column
+    substr_filter = f"AND message ILIKE '%{query}%'"
 
+
+    # Check for compound queries
+    span_id_filter = ''
+    trace_id_filter = ''
+    resource_id_filter = ''
+
+    if '@spanId' in query:
+        span_id = query.split('=')[1]
+        span_id_filter = f"AND span_id = '{span_id}'"
+        substr_filter=""
+    if '@traceId' in query:
+        trace_id = query.split('=')[1]
+        trace_id_filter = f"AND trace_id = '{trace_id}'"
+        substr_filter=""
+
+    if '@resourceId' in query:
+        resource_id = query.split('=')[1]
+        resource_id_filter = f"AND resource_id = '{resource_id}'"
+        substr_filter=""
+
+
+    # Check for regex query
+    regex_match = re.match(r'^/([^/]+)/$', query)
+    regex_filter = "" 
+    if regex_match:
+        regex_filter= f"AND message ~ '{regex_match.group(1)}'"
+        resource_id_filter=""
+        trace_id_filter=""
+        span_id_filter=""
+        
+
+
+    sql_query = f"SELECT * FROM log_data_table WHERE 1=1 {log_level_filter} {date_filter} {substr_filter} {span_id_filter} {trace_id_filter} {resource_id_filter} {regex_filter} LIMIT {page_size} OFFSET {offset}"
 
     results = session.execute(text(sql_query)).fetchall()
     

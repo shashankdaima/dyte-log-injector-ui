@@ -30,7 +30,7 @@ def main():
 
     # Top row
     with query:
-        query = st.text_input("Enter search query:", "", key="query")
+        query = st.text_input("Enter search query (@resourceId=server-1234 or @traceId=server-1234 or @spanId=span-456):", "", key="query")
     with log_level:
         log_level_options = ["All", "Error", "Info", "Debug"]  # Add other log levels as needed
         log_level = st.selectbox("Select log level:", log_level_options, key="log_level")
