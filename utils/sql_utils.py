@@ -42,7 +42,7 @@ def search_logs_in_postgres(session, query, log_level, start_timestamp, end_time
     
     list_of_dict=[]
     for index, value in enumerate(results):
-        list_of_dict.append(dict(results[0]._asdict()))
+        list_of_dict.append(dict(results[index]._asdict()))
     # df = pd.DataFrame(result, columns=column_names)
     # print(list_of_dict)
     return list_of_dict
