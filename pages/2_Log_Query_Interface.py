@@ -1,11 +1,7 @@
-# app.py
-
-import streamlit as st
 import pandas as pd
 from datetime import datetime, time
-from dateutil import parser
-from streamlit_pagination import pagination_component
-
+import streamlit as st
+from utils.sql_utils import get_engine_and_session, search_logs_in_postgres
 
 # Sample JSON data
 json_data = {
@@ -21,10 +17,18 @@ json_data = {
     }
 }
 
-PAGE_NO=1
-PAGE_SIZE=10
+
+def search_logs(query, log_level, start_timestamp, end_timestamp, page_size, page_no):
+    # Placeholder for search logic using the provided parameters
+    # In this example, we create a DataFrame with the sample JSON data
+    print(query, log_level, start_timestamp, end_timestamp, page_size, page_no)
+    engine, Session=get_engine_and_session()
+    result=search_logs_in_postgres(Session(),query,log_level, start_timestamp, end_timestamp )
+    search_result = pd.DataFrame(result)
+    return search_result
 
 def main():
+    page_no_count=1
     st.title("Log Search Interface")
     query, log_level = st.columns([6, 2])
 
@@ -35,22 +39,17 @@ def main():
         log_level_options = ["All", "Error", "Info", "Debug"]  # Add other log levels as needed
         log_level = st.selectbox("Select log level:", log_level_options, key="log_level")
 
-   
     start_date, start_time = st.columns([2, 2])
 
     # Date input
     with start_date:
-        selected_date = st.date_input("Select an start date", datetime.today())
+        selected_date = st.date_input("Select a start date", datetime.today())
 
     # Time input
     with start_time:
-        # Set the default time to 23:59 (11:59 PM)
         default_time = datetime.combine(datetime.today(), time(23, 59))
+        selected_time = st.time_input("Select a start time", default_time.time())
 
-        # Time input with default value
-        selected_time = st.time_input("Select an start time", default_time.time())
-
-    # Combine date and time to create a timestamp
     start_timestamp = datetime.combine(selected_date, selected_time)
 
     # Display the timestamp
@@ -64,48 +63,37 @@ def main():
 
     # Time input
     with end_time:
-        # Set the default time to 23:59 (11:59 PM)
         default_time = datetime.combine(datetime.today(), time(23, 59))
-
-        # Time input with default value
         selected_time = st.time_input("Select an end time", default_time.time())
 
-    # Combine date and time to create a timestamp
     end_timestamp = datetime.combine(selected_date, selected_time)
 
     # Display the timestamp
     st.write("Selected End Timestamp:", end_timestamp)
 
-    if st.button("Search"):
-        print(f"{query}, {log_level}, {start_timestamp}, {end_timestamp}")
-    
-    
-    # Create a DataFrame with a single row
-    df = pd.DataFrame([json_data])
-
-    # Display the table
-    st.table(df)
     # User inputs
     page_sizes = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
     # Layout with three columns
-    left_column, middle_column, right_column = st.columns([4, 1, 4])
+    left_column, middle_column, right_column = st.columns([1, 4, 1])
 
-    # Left column: Text "Showing 1 out of 15 pages"
-    left_column.text("Showing 1 out of 15 pages")
-
+  
     # Middle column: Empty space
     # (Middle column is 1/5th of the available space)
-    middle_column.text("")  # You can leave this empty or add any text you want
+    # middle_column.text("")  # You can leave this empty or add any text you want
 
     # Right column: Page size dropdown and Page number input with minimum width
-    with right_column:
+    with middle_column:
         l_col, r_col = st.columns([1,1])
         with l_col:
             page_size = st.selectbox("Choose Page Size:", page_sizes, index=0, key="page_size")
         with r_col:
             page_no = st.number_input("Enter Page Number:", min_value=1, value=1, key="page_no")
-
+            page_no_count=page_no
+    # Automatic search whenever input changes
+    search_result = search_logs(query, log_level, start_timestamp, end_timestamp, page_size, page_no)
+    # print(search_result)
+    st.table(search_result)
 
 if __name__ == "__main__":
     main()
