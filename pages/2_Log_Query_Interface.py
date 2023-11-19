@@ -19,16 +19,12 @@ json_data = {
 
 
 def search_logs(query, log_level, start_timestamp, end_timestamp, page_size, page_no):
-    # Placeholder for search logic using the provided parameters
-    # In this example, we create a DataFrame with the sample JSON data
-    print(query, log_level, start_timestamp, end_timestamp, page_size, page_no)
     engine, Session=get_engine_and_session()
-    result=search_logs_in_postgres(Session(),query,log_level, start_timestamp, end_timestamp )
+    result=search_logs_in_postgres(Session(),query,log_level, start_timestamp, end_timestamp, page_size, page_no )
     search_result = pd.DataFrame(result)
     return search_result
 
 def main():
-    page_no_count=1
     st.title("Log Search Interface")
     query, log_level = st.columns([6, 2])
 

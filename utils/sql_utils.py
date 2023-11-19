@@ -31,14 +31,20 @@ def execute_query(engine, query):
     connection.close()
     return result
 
-def search_logs_in_postgres(session, query, log_level, start_timestamp, end_timestamp):
+def search_logs_in_postgres(session, query, log_level, start_timestamp, end_timestamp, page_size, page_no):
     # Replace this query with your actual search query
     # This is just a placeholder query
-    sql_query = text("""
-        SELECT * FROM log_data_table
-    """)
+    print(query, log_level, start_timestamp, end_timestamp)
+    log_level_filter = f"AND level = '{log_level.lower()}'" if log_level != 'All' else ''
+    date_filter = f"AND timestamp BETWEEN '{start_timestamp}' AND '{end_timestamp}'"
 
-    results = session.execute(sql_query).fetchall()
+    # Calculate the offset based on the page size and number
+    offset = (page_no - 1) * page_size
+
+    sql_query = f"SELECT * FROM log_data_table WHERE 1=1 {log_level_filter} {date_filter} LIMIT {page_size} OFFSET {offset}"
+
+
+    results = session.execute(text(sql_query)).fetchall()
     
     list_of_dict=[]
     for index, value in enumerate(results):
